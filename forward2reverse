@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+# forward2reverse - convert A and AAAA (forward) DNS records to PTR (reverse) DNS records
+
+# Usage
+# echo "example.com. A 1.2.3.4" | forward2reverse
+
+# Example output:
+#4.3.2.1.in-addr.arpa. PTR example.com.
+
+require 'fcntl'
+require 'ipaddr'
+
+def validate_options
+  # Verify that standard input exists
+  unless $stdin.fcntl(Fcntl::F_GETFL, 0) == 0
+    puts "Please provide one or more forward DNS records via standard input."
+    puts
+    puts "For example:"
+    puts 'echo "example.com. A 1.2.3.4" | forward2reverse'
+    exit
+  end
+end
+
+# Convert an A or AAAA record to a PTR record
+def convert_record(line)
+  record = line.split(' ')
+  if record[1] == 'A' || record[1] == 'AAAA'
+    ip = IPAddr.new record[2]
+    name = ip.reverse
+    puts name + ". PTR " + record[0]
+  end
+end
+
+validate_options
+
+$stdin.each do | line |
+  convert_record(line)
+end
+
